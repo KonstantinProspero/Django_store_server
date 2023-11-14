@@ -1,10 +1,10 @@
-from django.shortcuts import render, HttpResponseRedirect
+from django.shortcuts import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.views.generic.base import TemplateView
 from django.views.generic.list import ListView
 
 from products.models import ProductCategory, Product, Basket
-from django.core.paginator import Paginator
+
 
 
 class IndexView(TemplateView):
@@ -19,6 +19,7 @@ class IndexView(TemplateView):
 class ProductsListView(ListView):
 	model = Product
 	template_name = 'products/products.html'
+	paginate_by = 3
 	
 	def get_queryset(self):
 		queryset = super(ProductsListView, self).get_queryset()
@@ -31,31 +32,6 @@ class ProductsListView(ListView):
 		context['categories'] = ProductCategory.objects.all()
 		return context
 
-# def index(request):
-# 	context = {
-# 		'title': 'Store',
-# 	    'is_promotion': False ,
-# 	}
-# 	return render(request, 'products/index.html', context)
-
-# def products(request, category_id=None, page_number=1):
-# 	products = Product.objects.filter(category_id = category_id) if category_id else Product.objects.all()
-# 	per_page = 3
-# 	paginator = Paginator(products, per_page)
-# 	products_paginator = paginator.page(page_number)
-# 	# if category_id:
-# 	# 	products = Product.objects.filter(category_id = category_id)
-# 	# else:
-# 	# 	products = Product.objects.all()
-# 	# Записываем с помощью тернарного оператора
-# 	#products = Product.objects.filter(category_id = category_id) if category_id else Product.objects.all()
-# 	# можно передать сразу в cotext
-# 	context = {
-# 		'title': 'Store - Каталог',
-# 		'categories': ProductCategory.objects.all(),
-# 		'products': products_paginator,
-# 	}
-# 	return render(request, 'products/products.html', context)
 
 @login_required
 def basket_add(request, product_id):
