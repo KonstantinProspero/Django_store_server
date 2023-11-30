@@ -1,10 +1,11 @@
 from django.shortcuts import render, HttpResponseRedirect
 from django.contrib import auth, messages
 from django.urls import reverse, reverse_lazy
+from django.views.generic.base import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 
-from users.models import User
+from users.models import User, EmailVerification
 from users.forms import UserLoginForm, UserRegistrationForm, UserProfileForm
 from products.models import Basket
 from commons.views import TitleMixin
@@ -49,46 +50,35 @@ class UserProfileView(TitleMixin, UpdateView):
         context['baskets'] = Basket.objects.filter(user=self.object)
         return context
 
-# def registration(request):
-#     if request.method == 'POST'888г  т:
-#         form = UserRegistrationForm(data = request.POST)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, 'Поздравляем! Вы успешно зарегистрированы!')
-#             return HttpResponseRedirect(reverse('users:login'))
-#     else:
-#         form = UserRegistrationForm()
-#     context = {'form': form}
-#     return render(request, 'users/registration.html', context)
 
-# @login_required
-# def profile(request):
-#     if request.method == 'POST':
-#         form = UserProfileForm(instance = request.user, data = request.POST, files = request.FILES )
-#         if form.is_valid():
-#             form.save()
-#             return HttpResponseRedirect(reverse('users:profile'))
-#         else:
-#             print(form.errors)
-#     else:
-#         form = UserProfileForm(instance = request.user)
-#
-#     baskets = Basket.objects.filter(user=request.user)
-    # total_sum = sum(basket.sum() for basket in baskets)
-    # total_quantity = sum(basket.quantity for basket in baskets)
-    # сверху то же с помощью генератора
-    # total_sum = 0
-    # total_quantity = 0
-    # for basket in baskets:
-    #     total_sum += basket.sum()
-    #     total_quantity += basket.quantity
+class EmailVerificationView(TitleMixin, TemplateView):
+    title = 'Store - Подтверждение электронной почты'
+    template_name = 'users/email_verification.html'
+
+    class EmailVerificationView(TitleMixin, TemplateView):
+        title = 'Store - Подтверждение электронной почты'
+        template_name = 'users/email_verification.html'
     
-    # context = {
-    #     'title': "store-profile",
-    #     'form': form,
-    #     'baskets': baskets,
-    # }
-    # return render(request, 'users/profile.html', context)
+        def get(self, request, *args, **kwargs):
+            code = kwargs['code']
+            user = User.objects.get(email = kwargs['email'])
+            email_verifications = EmailVerification.objects.filter(user = user, code = code)
+            if email_verifications.exists() and not email_verifications.first().is_expired():
+                user.is_verified_email = True
+                user.save()
+                return super(EmailVerificationView, self).get(request, *args, **kwargs)
+            else:
+                return HttpResponseRedirect(reverse('index'))
+    # def get(self, request, *args, **kwargs):
+    #     code = kwargs['code']
+    #     user = User.objects.get(email = kwargs['email'])
+    #     email_verifications = EmailVerification.objects.filter(user = user, code = code)
+    #     if email_verifications.exists():
+    #         user.is_verified_email = True
+    #         user.save()
+    #         return super(EmailVerification, self).get(request, *args, **kwargs)
+    #     else:
+    #         return HttpResponseRedirect(reverse('index'))
 
 def logout(request):
     auth.logout(request)
