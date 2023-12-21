@@ -5,7 +5,7 @@ from django.views.generic.list import ListView
 
 from commons.views import TitleMixin
 from products.models import Basket, Product, ProductCategory
-
+from django.core.cache import cache
 
 class IndexView(TitleMixin, TemplateView):
 	template_name = 'products/index.html'
@@ -28,7 +28,12 @@ class ProductsListView(TitleMixin, ListView):
 	
 	def get_context_data(self, *, object_list=None, **kwargs):
 		context = super(ProductsListView, self).get_context_data()
-		context['categories'] = ProductCategory.objects.all()
+		categories = cache.get('categories')
+		if not categories:
+			context['categories'] = ProductCategory.objects.all()
+			cache.set('categories', context['categories'], 30)
+		else:
+			context['categories'] = categories
 		return context
 
 
